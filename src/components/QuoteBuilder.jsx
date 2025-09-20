@@ -64,6 +64,37 @@ const QuoteBuilder = ({ projectData, updateProjectData, prevStep }) => {
 
     setQuote(newQuote)
     updateProjectData('quote', newQuote)
+    
+    // Auto-save to history
+    saveQuoteToHistory(newQuote)
+  }
+
+  const saveQuoteToHistory = (quoteData) => {
+    try {
+      const existingQuotes = JSON.parse(localStorage.getItem('quotesHistory') || '[]')
+      
+      // Check if quote already exists (update instead of duplicate)
+      const existingIndex = existingQuotes.findIndex(q => q.quoteNumber === quoteData.quoteNumber)
+      
+      if (existingIndex >= 0) {
+        existingQuotes[existingIndex] = {
+          ...quoteData,
+          updatedAt: new Date().toISOString()
+        }
+      } else {
+        existingQuotes.unshift({
+          ...quoteData,
+          createdAt: new Date().toISOString()
+        })
+      }
+      
+      // Keep only last 50 quotes
+      const limitedQuotes = existingQuotes.slice(0, 50)
+      
+      localStorage.setItem('quotesHistory', JSON.stringify(limitedQuotes))
+    } catch (error) {
+      console.error('Failed to save quote to history:', error)
+    }
   }
 
   const updateCompanyDetail = (field, value) => {
@@ -119,7 +150,7 @@ const QuoteBuilder = ({ projectData, updateProjectData, prevStep }) => {
       [''],
       ['Materials Subtotal', '', '', '', quote.costs.materials],
       ['Labour', '', '', '', quote.costs.labour],
-      ['Markup (' + quote.costs.markupPercent + '%)', '', '', '', quote.costs.markup],
+      ['Service Fee (' + quote.costs.markupPercent + '%)', '', '', '', quote.costs.markup],
       ['GST (' + gstRate + '%)', '', '', '', quote.costs.gst],
       ['TOTAL', '', '', '', quote.costs.total]
     ]
@@ -221,7 +252,7 @@ const QuoteBuilder = ({ projectData, updateProjectData, prevStep }) => {
           <tr><td>Materials Subtotal:</td><td>$${quote.costs.materials.toFixed(2)}</td></tr>
           ${quote.costs.labour > 0 ? `<tr><td>Labour:</td><td>$${quote.costs.labour.toFixed(2)}</td></tr>` : ''}
           <tr><td>Subtotal:</td><td>$${quote.costs.subtotal.toFixed(2)}</td></tr>
-          <tr><td>Markup (${quote.costs.markupPercent}%):</td><td>$${quote.costs.markup.toFixed(2)}</td></tr>
+          <tr><td>Service Fee (${quote.costs.markupPercent}%):</td><td>$${quote.costs.markup.toFixed(2)}</td></tr>
           <tr><td>GST (${gstRate}%):</td><td>$${quote.costs.gst.toFixed(2)}</td></tr>
           <tr class="total-row"><td><strong>TOTAL:</strong></td><td><strong>$${quote.costs.total.toFixed(2)}</strong></td></tr>
         </table>
@@ -363,11 +394,11 @@ const QuoteBuilder = ({ projectData, updateProjectData, prevStep }) => {
         )}
       </div>
 
-      {/* Markup */}
+      {/* Service Fee */}
       <div className="markup-section">
-        <h3>💰 Markup & Pricing</h3>
+        <h3>💰 Service Fee & Pricing</h3>
         <div className="markup-control">
-          <label>Markup Percentage:</label>
+          <label>Service Fee Percentage:</label>
           <input
             type="range"
             min="0"

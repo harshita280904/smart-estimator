@@ -99,6 +99,12 @@ function App() {
     setUser(null)
   }
 
+  const handleGoHome = () => {
+    setCurrentStep(1)
+    setShowSavedLists(false)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
   const CurrentComponent = steps[currentStep - 1].component
 
   // Show SavedLists if requested
@@ -110,6 +116,7 @@ function App() {
           onLogin={handleLogin} 
           onLogout={handleLogout} 
           onShowSavedLists={() => setShowSavedLists(true)}
+          onGoHome={handleGoHome}
         />
 
         <div className="app-container">
@@ -147,6 +154,7 @@ function App() {
         onLogin={handleLogin} 
         onLogout={handleLogout} 
         onShowSavedLists={() => setShowSavedLists(true)}
+        onGoHome={handleGoHome}
       />
 
       <div className="app-container">

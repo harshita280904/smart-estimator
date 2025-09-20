@@ -13,6 +13,18 @@ const QuantityCalculator = ({ projectData, updateProjectData, nextStep, prevStep
   const [pendingConsumables, setPendingConsumables] = useState([])
   const [showConsumablePrompt, setShowConsumablePrompt] = useState(false)
 
+  const updateFinalQuantity = (materialId, newQuantity) => {
+    const updatedQuantities = {
+      ...quantities,
+      [materialId]: {
+        ...quantities[materialId],
+        finalQuantity: parseFloat(newQuantity) || 0
+      }
+    }
+    setQuantities(updatedQuantities)
+    updateProjectData('quantities', updatedQuantities)
+  }
+
   useEffect(() => {
     calculateQuantities()
   }, [projectData.materials, projectData.dimensions, wastagePercent])
@@ -336,6 +348,9 @@ const QuantityCalculator = ({ projectData, updateProjectData, nextStep, prevStep
       {/* Quantities Table */}
       <div className="quantities-table">
         <h3>📋 Bill of Quantities</h3>
+        <p style={{ color: 'var(--text-secondary)', marginBottom: '1rem', fontStyle: 'italic' }}>
+          📝 The quantities have been estimated for you based on your project dimensions. You can edit them if needed.
+        </p>
         <table>
           <thead>
             <tr>
@@ -359,7 +374,22 @@ const QuantityCalculator = ({ projectData, updateProjectData, nextStep, prevStep
                 <td>{qty.material.category}</td>
                 <td>{qty.baseQuantity}</td>
                 <td>{qty.wastage}</td>
-                <td><strong>{qty.finalQuantity}</strong></td>
+                <td>
+                  <input
+                    type="number"
+                    step="0.1"
+                    value={qty.finalQuantity}
+                    onChange={(e) => updateFinalQuantity(id, e.target.value)}
+                    style={{
+                      width: '80px',
+                      padding: '0.25rem',
+                      border: '1px solid var(--border-color)',
+                      borderRadius: '4px',
+                      fontSize: '0.9rem',
+                      textAlign: 'center'
+                    }}
+                  />
+                </td>
                 <td>{qty.unit}</td>
                 {includeLabour && (
                   <td>{calculateLabourDays(id, qty.finalQuantity)}</td>

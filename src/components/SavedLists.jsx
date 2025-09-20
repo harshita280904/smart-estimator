@@ -3,14 +3,17 @@ import { useState, useEffect } from 'react'
 const SavedLists = ({ projectData, updateProjectData, onLoadMaterials }) => {
   const [savedMaterials, setSavedMaterials] = useState([])
   const [savedQuotes, setSavedQuotes] = useState([])
-  const [activeTab, setActiveTab] = useState('materials')
+  const [quotesHistory, setQuotesHistory] = useState([])
+  const [activeTab, setActiveTab] = useState('history')
 
   useEffect(() => {
-    // Load saved materials and quotes from localStorage
+    // Load saved materials, quotes, and history from localStorage
     const savedMaterialLists = JSON.parse(localStorage.getItem('savedMaterials') || '[]')
     const savedQuotesList = JSON.parse(localStorage.getItem('savedQuotes') || '[]')
+    const historyQuotes = JSON.parse(localStorage.getItem('quotesHistory') || '[]')
     setSavedMaterials(savedMaterialLists)
     setSavedQuotes(savedQuotesList)
+    setQuotesHistory(historyQuotes)
   }, [])
 
   const loadSavedMaterials = (savedList) => {
@@ -27,6 +30,28 @@ const SavedLists = ({ projectData, updateProjectData, onLoadMaterials }) => {
     updateProjectData('suppliers', savedQuote.projectData.suppliers)
     updateProjectData('quote', savedQuote.projectData.quote)
     alert(`Loaded quote: ${savedQuote.name}`)
+  }
+
+  const loadHistoryQuote = (historyQuote) => {
+    // Load project data from history quote
+    updateProjectData('dimensions', {
+      area: historyQuote.project.area,
+      volume: historyQuote.project.volume
+    })
+    updateProjectData('projectType', historyQuote.project.type)
+    if (historyQuote.materials) {
+      updateProjectData('quantities', historyQuote.materials)
+    }
+    if (historyQuote.suppliers) {
+      updateProjectData('suppliers', historyQuote.suppliers)
+    }
+    alert(`Loaded quote from history: ${historyQuote.quoteNumber}`)
+  }
+
+  const deleteHistoryQuote = (quoteNumber) => {
+    const updated = quotesHistory.filter(quote => quote.quoteNumber !== quoteNumber)
+    setQuotesHistory(updated)
+    localStorage.setItem('quotesHistory', JSON.stringify(updated))
   }
 
   const deleteSavedItem = (type, id) => {
@@ -57,9 +82,15 @@ const SavedLists = ({ projectData, updateProjectData, onLoadMaterials }) => {
 
   return (
     <div className="saved-lists">
-      <h2>💾 Saved Lists & Quotes</h2>
+      <h2>� History & Saved Lists</h2>
       
       <div className="tabs">
+        <button 
+          className={`tab-btn ${activeTab === 'history' ? 'active' : ''}`}
+          onClick={() => setActiveTab('history')}
+        >
+          📈 Quote History ({quotesHistory.length})
+        </button>
         <button 
           className={`tab-btn ${activeTab === 'materials' ? 'active' : ''}`}
           onClick={() => setActiveTab('materials')}
@@ -70,11 +101,64 @@ const SavedLists = ({ projectData, updateProjectData, onLoadMaterials }) => {
           className={`tab-btn ${activeTab === 'quotes' ? 'active' : ''}`}
           onClick={() => setActiveTab('quotes')}
         >
-          📄 Saved Quotes ({savedQuotes.length})
+          📄 Manual Saves ({savedQuotes.length})
         </button>
       </div>
 
       <div className="tab-content">
+        {activeTab === 'history' && (
+          <div className="history-tab">
+            <div className="tab-header">
+              <h3>Quote History</h3>
+              <p>Automatically saved quotes from completed projects</p>
+            </div>
+            
+            {quotesHistory.length === 0 ? (
+              <div className="empty-state">
+                <p>No quote history yet.</p>
+                <p>Complete a quote in the Quote Builder to see it appear here automatically.</p>
+              </div>
+            ) : (
+              <div className="saved-items-grid">
+                {quotesHistory.map(quote => (
+                  <div key={quote.quoteNumber} className="saved-item-card">
+                    <div className="item-header">
+                      <h4>Quote {quote.quoteNumber}</h4>
+                      <span className="created-date">{quote.date}</span>
+                    </div>
+                    
+                    <div className="item-details">
+                      <p><strong>Project:</strong> {quote.project.type}</p>
+                      <p><strong>Area:</strong> {quote.project.area}m²</p>
+                      <p><strong>Total Cost:</strong> ${quote.costs.total.toFixed(2)}</p>
+                      <p><strong>Materials:</strong> ${quote.costs.materials.toFixed(2)}</p>
+                      <p><strong>Service Fee:</strong> ${quote.costs.markup.toFixed(2)} ({quote.costs.markupPercent}%)</p>
+                      {quote.createdAt && (
+                        <p><strong>Created:</strong> {new Date(quote.createdAt).toLocaleString()}</p>
+                      )}
+                    </div>
+                    
+                    <div className="item-actions">
+                      <button 
+                        onClick={() => loadHistoryQuote(quote)}
+                        className="btn btn-primary btn-sm"
+                      >
+                        Load Quote
+                      </button>
+                      <button 
+                        onClick={() => deleteHistoryQuote(quote.quoteNumber)}
+                        className="btn btn-danger btn-sm"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
         {activeTab === 'materials' && (
           <div className="materials-tab">
             <div className="tab-header">

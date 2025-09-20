@@ -82,6 +82,7 @@ body {
   display: flex;
   align-items: center;
   gap: 2rem;
+  flex: 1;
 }
 
 .logo {
@@ -92,6 +93,20 @@ body {
   font-weight: 700;
   text-decoration: none;
   color: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  padding: 0.5rem;
+  border-radius: 8px;
+}
+
+.logo:hover {
+  background-color: rgba(255, 255, 255, 0.9);
+  color: var(--primary-color);
+}
+
+.logo:active {
+  background-color: rgba(255, 255, 255, 1);
+  color: var(--primary-color);
 }
 
 .logo-icon {
@@ -101,6 +116,7 @@ body {
 .main-nav {
   display: flex;
   gap: 1.5rem;
+  margin-left: auto;
 }
 
 .nav-link {
