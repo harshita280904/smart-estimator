@@ -58,93 +58,21 @@ const ProjectInput = ({ projectData, updateProjectData, nextStep }) => {
     }
   }
 
-  const canProceed = projectType && (dimensions.volume > 0 || (dimensions.length > 0 && dimensions.width > 0 && dimensions.height > 0))
+  const canProceed = () => {
+    if (!projectType || !dimensions.length || !dimensions.width) return false;
+    
+    // For wall, room, and house projects, we need height
+    if (['wall', 'room', 'house'].includes(projectType)) {
+      return dimensions.height > 0;
+    }
+    
+    // For floor, ceiling, and roof projects, we only need length and width
+    return true;
+  }
 
   return (
     <div className="project-input">
       <h2>📐 Project Setup</h2>
-      
-      <div className="input-section">
-        <h3>Upload Plans or Enter Dimensions</h3>
-        
-        <div className="upload-section">
-          <label htmlFor="file-upload" className="upload-btn">
-            📄 Upload PDF/CAD Plans
-          </label>
-          <input
-            id="file-upload"
-            type="file"
-            accept=".pdf,.dwg,.dxf"
-            onChange={handleFileUpload}
-            style={{ display: 'none' }}
-          />
-          <p className="upload-help">Supported: PDF, DWG, DXF files</p>
-        </div>
-
-        <div className="divider">OR</div>
-
-        <div className="manual-input">
-          <h4>Manual Dimension Entry</h4>
-          <div className="dimension-grid">
-            <div className="input-group">
-              <label>Length (m)</label>
-              <input
-                type="number"
-                step="0.1"
-                value={dimensions.length || ''}
-                onChange={(e) => handleDimensionChange('length', e.target.value)}
-                onBlur={() => { calculateArea(); calculateVolume(); }}
-              />
-            </div>
-            
-            <div className="input-group">
-              <label>Width (m)</label>
-              <input
-                type="number"
-                step="0.1"
-                value={dimensions.width || ''}
-                onChange={(e) => handleDimensionChange('width', e.target.value)}
-                onBlur={() => { calculateArea(); calculateVolume(); }}
-              />
-            </div>
-            
-            <div className="input-group">
-              <label>Height (m)</label>
-              <input
-                type="number"
-                step="0.1"
-                value={dimensions.height || ''}
-                onChange={(e) => handleDimensionChange('height', e.target.value)}
-                onBlur={() => { calculateArea(); calculateVolume(); }}
-              />
-            </div>
-          </div>
-
-          <div className="calculated-fields">
-            <div className="input-group">
-              <label>Area (m²)</label>
-              <input
-                type="number"
-                step="0.1"
-                value={dimensions.area || ''}
-                readOnly
-                style={{ backgroundColor: '#1e293b', cursor: 'not-allowed' }}
-              />
-            </div>
-
-            <div className="input-group">
-              <label>Volume (m³)</label>
-              <input
-                type="number"
-                step="0.1"
-                value={dimensions.volume || ''}
-                readOnly
-                style={{ backgroundColor: '#1e293b', cursor: 'not-allowed' }}
-              />
-            </div>
-          </div>
-        </div>
-      </div>
 
       <div className="project-type-section">
         <h3>Select Project Type</h3>
@@ -162,6 +90,94 @@ const ProjectInput = ({ projectData, updateProjectData, nextStep }) => {
         </div>
       </div>
 
+      {projectType && (
+        <div className="input-section">
+          <h3>Upload Plans or Enter Dimensions</h3>
+          
+          <div className="upload-section">
+            <label htmlFor="file-upload" className="upload-btn">
+              📄 Upload PDF/CAD Plans
+            </label>
+            <input
+              id="file-upload"
+              type="file"
+              accept=".pdf,.dwg,.dxf"
+              onChange={handleFileUpload}
+              style={{ display: 'none' }}
+            />
+            <p className="upload-help">Supported: PDF, DWG, DXF files</p>
+          </div>
+
+          <div className="divider">OR</div>
+
+          <div className="manual-input">
+            <h4>Manual Dimension Entry</h4>
+            <div className="dimension-grid">
+              <div className="input-group">
+                <label>Length (m)</label>
+                <input
+                  type="number"
+                  step="0.1"
+                  value={dimensions.length || ''}
+                  onChange={(e) => handleDimensionChange('length', e.target.value)}
+                  onBlur={() => { calculateArea(); calculateVolume(); }}
+                />
+              </div>
+              
+              <div className="input-group">
+                <label>Width (m)</label>
+                <input
+                  type="number"
+                  step="0.1"
+                  value={dimensions.width || ''}
+                  onChange={(e) => handleDimensionChange('width', e.target.value)}
+                  onBlur={() => { calculateArea(); calculateVolume(); }}
+                />
+              </div>
+              
+              {['wall', 'room', 'house'].includes(projectType) && (
+                <div className="input-group">
+                  <label>Height (m)</label>
+                  <input
+                    type="number"
+                    step="0.1"
+                    value={dimensions.height || ''}
+                    onChange={(e) => handleDimensionChange('height', e.target.value)}
+                    onBlur={() => { calculateArea(); calculateVolume(); }}
+                  />
+                </div>
+              )}
+            </div>
+
+            <div className="calculated-fields">
+              <div className="input-group">
+                <label>Area (m²)</label>
+                <input
+                  type="number"
+                  step="0.1"
+                  value={dimensions.area || ''}
+                  readOnly
+                  style={{ backgroundColor: '#1e293b', cursor: 'not-allowed' }}
+                />
+              </div>
+
+              {['wall', 'room', 'house'].includes(projectType) && (
+                <div className="input-group">
+                  <label>Volume (m³)</label>
+                  <input
+                    type="number"
+                    step="0.1"
+                    value={dimensions.volume || ''}
+                    readOnly
+                    style={{ backgroundColor: '#1e293b', cursor: 'not-allowed' }}
+                  />
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {(dimensions.area > 0 || dimensions.volume > 0) && (
         <div className="summary">
           <h4>Project Summary</h4>
@@ -176,7 +192,7 @@ const ProjectInput = ({ projectData, updateProjectData, nextStep }) => {
         <button
           className="btn btn-primary"
           onClick={nextStep}
-          disabled={!canProceed}
+          disabled={!canProceed()}
         >
           Next: Select Materials →
         </button>
