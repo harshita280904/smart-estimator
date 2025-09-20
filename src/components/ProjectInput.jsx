@@ -45,29 +45,42 @@ const ProjectInput = ({ projectData, updateProjectData, nextStep }) => {
   }
 
   const calculateArea = () => {
-    if (dimensions.length && dimensions.width) {
-      const area = dimensions.length * dimensions.width
-      handleDimensionChange('area', area)
+    if (projectType === 'wall') {
+      if (dimensions.length && dimensions.height) {
+        const area = dimensions.length * dimensions.height
+        handleDimensionChange('area', area)
+      }
+    } else {
+      if (dimensions.length && dimensions.width) {
+        const area = dimensions.length * dimensions.width
+        handleDimensionChange('area', area)
+      }
     }
   }
 
   const calculateVolume = () => {
-    if (dimensions.length && dimensions.width && dimensions.height) {
-      const volume = dimensions.length * dimensions.width * dimensions.height
-      handleDimensionChange('volume', volume)
+    // Only calculate volume for room and house
+    if (['room', 'house'].includes(projectType)) {
+      if (dimensions.length && dimensions.width && dimensions.height) {
+        const volume = dimensions.length * dimensions.width * dimensions.height
+        handleDimensionChange('volume', volume)
+      }
     }
   }
 
   const canProceed = () => {
-    if (!projectType || !dimensions.length || !dimensions.width) return false;
+    if (!projectType) return false;
     
-    // For wall, room, and house projects, we need height
-    if (['wall', 'room', 'house'].includes(projectType)) {
-      return dimensions.height > 0;
+    if (projectType === 'wall') {
+      // For walls, we only need length and height
+      return dimensions.length > 0 && dimensions.height > 0;
+    } else if (['room', 'house'].includes(projectType)) {
+      // For room and house, we need all dimensions
+      return dimensions.length > 0 && dimensions.width > 0 && dimensions.height > 0;
+    } else {
+      // For floor, ceiling, and roof projects, we only need length and width
+      return dimensions.length > 0 && dimensions.width > 0;
     }
-    
-    // For floor, ceiling, and roof projects, we only need length and width
-    return true;
   }
 
   return (
@@ -124,16 +137,18 @@ const ProjectInput = ({ projectData, updateProjectData, nextStep }) => {
                 />
               </div>
               
-              <div className="input-group">
-                <label>Width (m)</label>
-                <input
-                  type="number"
-                  step="0.1"
-                  value={dimensions.width || ''}
-                  onChange={(e) => handleDimensionChange('width', e.target.value)}
-                  onBlur={() => { calculateArea(); calculateVolume(); }}
-                />
-              </div>
+              {projectType !== 'wall' && (
+                <div className="input-group">
+                  <label>Width (m)</label>
+                  <input
+                    type="number"
+                    step="0.1"
+                    value={dimensions.width || ''}
+                    onChange={(e) => handleDimensionChange('width', e.target.value)}
+                    onBlur={() => { calculateArea(); calculateVolume(); }}
+                  />
+                </div>
+              )}
               
               {['wall', 'room', 'house'].includes(projectType) && (
                 <div className="input-group">
@@ -161,7 +176,7 @@ const ProjectInput = ({ projectData, updateProjectData, nextStep }) => {
                 />
               </div>
 
-              {['wall', 'room', 'house'].includes(projectType) && (
+              {['room', 'house'].includes(projectType) && (
                 <div className="input-group">
                   <label>Volume (m³)</label>
                   <input
@@ -182,9 +197,16 @@ const ProjectInput = ({ projectData, updateProjectData, nextStep }) => {
         <div className="summary">
           <h4>Project Summary</h4>
           <p><strong>Type:</strong> {projectTypes.find(t => t.id === projectType)?.name || 'Not selected'}</p>
-          <p><strong>Dimensions:</strong> {dimensions.length}m × {dimensions.width}m × {dimensions.height}m</p>
+          <p><strong>Dimensions:</strong> 
+            {projectType === 'wall' ? 
+              `${dimensions.length}m × ${dimensions.height}m` :
+              `${dimensions.length}m × ${dimensions.width}m${dimensions.height ? ` × ${dimensions.height}m` : ''}`
+            }
+          </p>
           <p><strong>Total Area:</strong> {dimensions.area}m²</p>
-          <p><strong>Total Volume:</strong> {dimensions.volume}m³</p>
+          {['room', 'house'].includes(projectType) && (
+            <p><strong>Total Volume:</strong> {dimensions.volume}m³</p>
+          )}
         </div>
       )}
 
